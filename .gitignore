@@ -12,11 +12,13 @@ backup_cleanup/
 *.bak
 *.map
 *.htm
-JLinkLog.txt
 *.axf
 *.crf
 *.d
 *.o
+
+# Text files
+*.txt
 
 # Markdown files
 *.md
