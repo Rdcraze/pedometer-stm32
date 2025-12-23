@@ -1,106 +1,94 @@
-# STM32F407IGHx Pedometer Project
+# STM32 Intelligent Pedometer System (基于STM32的智能计步器)
 
-A complete pedometer system for STM32F407IGHx with MPU6050 accelerometer, SSD1306 OLED display, and comprehensive fitness metrics.
+A high-precision embedded pedometer system powered by STM32F407 and MPU6050, featuring advanced DSP algorithms, orientation-independent step counting, and a rich OLED user interface.
 
-## Hardware Configuration
+## 🌟 Key Features
 
-**MCU:** STM32F407IGT6 (168 MHz, 1MB Flash, 192KB RAM)
+### Core Pedometer Technology
+*   **High-Precision Sampling**: 50Hz fixed-rate sampling using MPU6050 and hardware timer (TIM3).
+*   **Orientation Independent**: Vector Magnitude ($Mag = \sqrt{x^2+y^2+z^2}$) calculation allows counting in any position (wrist, pocket, bag).
+*   **Smart Filtering**:
+    *   **High-Pass Filter (HPF)**: Cutoff at ~1.2Hz to remove gravity and DC components.
+    *   **Anti-Shake State Machine**: 4-step buffer mechanism combined with time-interval regularity check (<40% variance) to eliminate false steps (e.g., typing, car bumps).
 
-**Peripherals:**
+### Hardware Specifications
+*   **MCU**: STM32F407IGT6 (Cortex-M4F @ 168MHz)
+*   **Sensor**: InvenSense MPU6050 (6-Axis IMU) via Hardware I2C.
+*   **Display**: 0.96" SSD1306 OLED (128x64) via High-Speed SPI.
+*   **Storage**: Internal Flash (Sector 11) for data persistence.
+*   **Input**: 3 x Mechanical Buttons with Debounce Logic.
+*   **Feedback**: Passive Buzzer (Melodic Alerts) & LED Indicators.
 
-- **MPU6050 Accelerometer:** I2C3 (SCL=PH4, SDA=PH5)
-- **SSD1306 OLED Display:** SPI1 (SCK=PB3, MOSI=PB5, RES=PB6, DC=PB9, CS=GND)
-- **Keys:**
-  - Key1 (PI8): Clear step count
-  - Key2 (PC13): Increment target steps (+500)
-  - Key3 (PA0): Decrement target steps (-500)
-- **Passive Buzzer:** PA8 (TIM1_CH1 PWM)
+### Advanced Metrics
+*   **Adaptive Stride Length**: Dynamically calculates stride based on Height and Cadence (Walking vs Running).
+*   **Real-time Speed/Pace**: 
+    *   Speed: km/h
+    *   Pace: min/km (selectable)
+*   **Calories Burned**: Calculated using METs (Metabolic Equivalent of Task) table.
+*   **Training Load**: Innovation metric based on sRPE (Session Rate of Perceived Exertion).
 
-## Features
+### User Interface & Experience
+*   **Dual Language**: Support for **Chinese (中文)** and **English**.
+*   **Animated UI**: Dynamic "Walking Person" animation speed-synced with real-time cadence.
+*   **Data Persistence**: 
+    *   Auto-save to Flash (Sector 11) every 5 minutes or 500 steps.
+    *   Wear-leveling strategy and Integrity Checks (Magic Number `0xCAFEBABE` + Checksum).
+*   **Smart Alerts**:
+    *   **Target Reached**: Melodic celebration.
+    *   **Sedentary Reminder**: Alerts after 30 minutes of inactivity.
 
-1. **Step Counting:** Accurate step detection using peak detection algorithm with adaptive threshold
-2. **Speed Calculation:** Real-time speed in km/h based on stride length and cadence
-3. **Calorie Tracking:** METs-based calorie calculation considering activity intensity
-4. **Training Load:** sRPE-based training load metric for workout intensity monitoring
-5. **Target Notification:** Buzzer alert when step target is reached
-6. **Progress Display:** Visual progress bar on OLED showing completion percentage
+---
 
-## Display Layout
+## 🎮 Controls (Button Map)
 
+| Key | Action | Function |
+| :--- | :--- | :--- |
+| **KEY1** (PI8) | **Double Click** | Toggle Language (CN/EN) |
+| | **Triple Click** | Test Mode (Set steps to Target - 50) |
+| | **Long Press** | **Reset All Data** (Clear steps, calories, etc.) |
+| **KEY2** (PC13) | **Single Click** | Increase Target (+500) |
+| | **Double Click** | Stopwatch (Start / Pause / Resume) |
+| | **Triple Click** | Reset Stopwatch |
+| | **Long Press** | **Demo Mode** (Simulate Walking/Running) |
+| **KEY3** (PI11) | **Single Click** | Decrease Target (-500) |
+| | **Double Click** | Toggle Pace Mode (km/h <-> min/km) |
+| | **Long Press** | **Manual Save** (Force write to Flash) |
+
+---
+
+## 📊 Display Layout
+
+**Main Screen:**
 ```
-┌────────────────────────────┐
-│ 12345/10000                │  Steps / Target
-│ 5.2 km/h                   │  Speed
-│ Cal: 245 kcal              │  Calories burned
-│ Load: 125                  │  Training load
-│ [=========>        ]       │  Progress bar
-└────────────────────────────┘
+ 步数 (Steps)
+ 12345 / 10000      <-- Progress vs Target
+ 
+ 速度 (Speed)       [DEMO] <-- Status Indicators
+ 5.2 km/h
+ 
+ 卡路里 (Cal) / 负荷 (Load)
+ 245 / 125 
+ 
+ 1.25km             <-- Distance
+ [====>      ]      <-- Animated Progress Bar
 ```
 
-## Key Controls
+---
 
-- **Key1 (PI8):** Clear all metrics (steps, calories, training load)
-- **Key2 (PC13):** Increase target by 500 steps (max 50,000)
-- **Key3 (PA0):** Decrease target by 500 steps (min 500)
+## 🛠 Project Structure
 
-### Project Settings
+*   `Program/`: Main application logic (`main.c`, `stm32f4xx_it.c`).
+*   `Driver/`: Hardware abstraction layer.
+    *   `pedometer.c`: Core step counting algorithm.
+    *   `mpu6050.c`: I2C sensor driver.
+    *   `oled.c`: SPI display driver and graphics.
+    *   `key_handler.c`: Multi-press state machine.
+    *   `flash_data.c`: Internal Flash storage management.
+*   `diagrams.md`: Mermaid diagrams referencing system architecture.
+*   `presentation_plan.md`: Detailed presentation slide deck plan.
+*   `report.md`: Comprehensive project report.
 
-- **Device:** STM32F407IGHx
-- **Clock:** 168 MHz
-- **Optimization:** -O2
-- **C Standard:** C99
-- **Preprocessor Defines:** `STM32F40_41xxx`, `USE_STDPERIPH_DRIVER`
-
-## Algorithm Details
-
-### Step Detection
-
-- **Method:** Peak detection with adaptive threshold
-- **Sampling Rate:** 50 Hz
-- **Filter:** High-pass filter to remove gravity component
-- **Validation:** Minimum/maximum interval checking (250ms - 2000ms)
-
-### Speed Calculation
-
-- **Walking Stride:** Height × 0.43 meters
-- **Running Stride:** Height × 0.45 meters (cadence > 140 steps/min)
-- **Formula:** Speed (km/h) = (Cadence / 60) × Stride × 3.6
-- **Smoothing:** Exponential moving average
-
-### Calorie Calculation
-
-- **Method:** METs-based (Compendium of Physical Activities)
-- **Formula:** Calories = MET × Weight(kg) × Duration(hours)
-- **MET Values:**
-  - Slow walk (< 3.2 km/h): 2.0 METs
-  - Moderate walk (3.2-4.8 km/h): 3.0 METs
-  - Brisk walk (4.8-6.4 km/h): 4.0 METs
-  - Fast walk (6.4-8.0 km/h): 5.0 METs
-  - Running (> 8.0 km/h): 8.0 METs
-
-### Training Load
-
-- **Method:** Session RPE (Rate of Perceived Exertion)
-- **RPE Scale:**
-  - Cadence < 80: RPE 2 (Very light)
-  - Cadence 80-100: RPE 3 (Light)
-  - Cadence 100-120: RPE 5 (Moderate)
-  - Cadence 120-140: RPE 7 (Hard)
-  - Cadence > 140: RPE 9 (Very hard)
-- **Formula:** Training Load = RPE × Duration(minutes)
-
-## User Parameters
-
-Default values (can be changed in header files):
-
-- **Weight:** 70 kg (calories.h)
-- **Height:** 170 cm (speed_calc.h)
-- **Age:** 30 years (calories.h)
-
-## References
-
-1. **Step Detection:** Zhao, "Step Counter Algorithm" (2010)
-2. **Calorie Calculation:** Ainsworth et al., "Compendium of Physical Activities" (2011)
-3. **Training Load:** Foster et al., "A New Approach to Monitoring Exercise Training" (2001)
-
-# 
+## 📜 References
+1.  **Step Detection**: Peak detection with adaptive time-window thresholding.
+2.  **Calorie Calculation**: *Compendium of Physical Activities* (Ainsworth et al.).
+3.  **Training Load**: Foster's Session RPE Scale.

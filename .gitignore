@@ -1,0 +1,22 @@
+# Keil MDK / ARM Generated Files
+Listings/
+Objects/
+RTE/
+DebugConfig/
+backup_cleanup/
+*.uvoptx
+*.uvguix.*
+*.scvd
+*.dep
+*.bak
+*.map
+*.htm
+JLinkLog.txt
+*.axf
+*.crf
+*.d
+*.o
+
+# Markdown files
+*.md
+!README.md
