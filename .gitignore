@@ -4,6 +4,7 @@ Objects/
 RTE/
 DebugConfig/
 backup_cleanup/
+.claude/
 *.uvoptx
 *.uvguix.*
 *.scvd
